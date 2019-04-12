@@ -23,7 +23,8 @@ namespace NorthwindConsole
                     Console.WriteLine("3) Display Category and related products");
                     Console.WriteLine("4) Display all Categories and their related products");
                     Console.WriteLine("5) Add Product");
-                    Console.WriteLine("6) Add Supplier");
+                    Console.WriteLine("6) Display Specific Product Information");
+                    Console.WriteLine("7) Edit Product");
                     Console.WriteLine("\"q\" to quit");
                     choice = Console.ReadLine();
                     Console.Clear();
@@ -34,8 +35,7 @@ namespace NorthwindConsole
                     } 
                     else if (choice == "2")
                     {
-                        Category newCategory = getCategoryInfo();
-                        submitCategory(newCategory);
+                        addCategory();
 
                     }
                     else if (choice == "3")
@@ -48,14 +48,16 @@ namespace NorthwindConsole
                     }
                     else if(choice=="5")
                     {
-                        Product newProduct = getProductInfo();
-                        submitProduct(newProduct);
+                        addProduct();
 
                     }
                     else if(choice=="6")
                     {
-                        Supplier newSupplier = getSupplierinfo();
-                        submitSupplier(newSupplier);
+                        displayProductInformation();
+
+                    }
+                    else if(choice=="7")
+                    {
 
                     }
                     Console.WriteLine();
@@ -69,9 +71,40 @@ namespace NorthwindConsole
             logger.Info("Program ended");
         }
 
+        //Adds a new Product to database
+        public static void addProduct()
+        {
+            Product newProduct = getProductInfo();
+            if(validateProduct(newProduct))
+            {
+                //TODO: Add to table
+            }
+        }
+
+        //Adds a new category to database
+        public static void addCategory()
+        {
+            Category newCategory = getCategoryInfo();
+            if(validateCategory(newCategory))
+            {
+                //TODO: ADD RECORD
+            }
+        }
+
+        //Adds a new Supplier to database
+        public static void addSupplier()
+        {
+            Supplier newSupplier = getSupplierinfo();
+            if(validateSupplier(newSupplier))
+            {
+                //TODO: Add to DataBase
+            }
+        }
 
 
 
+
+        //Displays All Suppliers
         public static void displaySuppliers()
         {
             var db = new NorthwindContext();
@@ -82,6 +115,7 @@ namespace NorthwindConsole
             }
         }
 
+        //Displays Categories
         public static void displayCategories()
         {
             var db = new NorthwindContext();
@@ -92,6 +126,7 @@ namespace NorthwindConsole
             }
         }
 
+        //Prompts User for Product fields, returns Product
         public static Product getProductInfo()
         {
             int value;
@@ -199,11 +234,10 @@ namespace NorthwindConsole
             } while (!validBool);
 
             return newProduct;
-
-
         }
 
-        public static void submitProduct(Product newProduct)
+        //Validates a Product, returns boolean value
+        public static bool validateProduct(Product newProduct)
         {
             ValidationContext context = new ValidationContext(newProduct, null, null);
             List<ValidationResult> results = new List<ValidationResult>();
@@ -231,6 +265,7 @@ namespace NorthwindConsole
                 else
                 {
                     logger.Info("Validation passed");
+                    return true;
                     // TODO: save category to db
                 }
             }
@@ -241,8 +276,10 @@ namespace NorthwindConsole
                     logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
                 }
             }
+            return false;
         }
 
+        //Prompts User for Supplier fields, returns Supplier
         public static Supplier getSupplierinfo()
         {
             Supplier newSupplier = new Supplier();
@@ -371,7 +408,8 @@ namespace NorthwindConsole
             return newSupplier;
         }
 
-        public static void submitSupplier(Supplier newSupplier)
+        //Validates Supplier, returns boolean
+        public static bool validateSupplier(Supplier newSupplier)
         {
             var db = new NorthwindContext();
             ValidationContext context = new ValidationContext(newSupplier, null, null);
@@ -387,6 +425,7 @@ namespace NorthwindConsole
                 else
                 {
                     logger.Info("Acceptable Entry");
+                    return true;
                 }
             }
             if (!isValid)
@@ -396,8 +435,10 @@ namespace NorthwindConsole
                     logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
                 }
             }
+            return false;
         }
 
+        //Prompts user for category fields, returns category
         public static Category getCategoryInfo()
         {
             Category category = new Category();
@@ -408,7 +449,8 @@ namespace NorthwindConsole
             return category;
         }
 
-        public static void submitCategory(Category category)
+        //Validates category, returns boolean
+        public static bool validateCategory(Category category)
         {
             ValidationContext context = new ValidationContext(category, null, null);
             List<ValidationResult> results = new List<ValidationResult>();
@@ -427,6 +469,7 @@ namespace NorthwindConsole
                 else
                 {
                     logger.Info("Validation passed");
+                    return true;
                     // TODO: save category to db
                 }
             }
@@ -437,8 +480,10 @@ namespace NorthwindConsole
                     logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
                 }
             }
+            return false;
         }
 
+        //Displays all Categorys and their Products with ID
         public static void displayAllCategoriesAndProducts()
         {
             var db = new NorthwindContext();
@@ -448,11 +493,17 @@ namespace NorthwindConsole
                 Console.WriteLine($"{item.CategoryName}");
                 foreach (Product p in item.Products)
                 {
-                    Console.WriteLine($"\t{p.ProductName}");
+                    if(p.Discontinued)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                    }
+                    Console.WriteLine($"\tID: {p.ProductID}\tName:{p.ProductName}");
+                    Console.ResetColor();
                 }
             }
         }
 
+        //DPrompts user for category, then displays all products
         public static void displayCategoryProducts()
         {
             int id = getTargetCategory();
@@ -467,6 +518,7 @@ namespace NorthwindConsole
             }
         }
 
+        //Prompts user for valid Category ID, returns ID
         public static int getTargetCategory()
         {
             bool validId = false;
@@ -490,6 +542,63 @@ namespace NorthwindConsole
 
             return targetID;
         }
+
+        //Prompts User for valid Product ID, returns ID
+        public static int getTargetProduct()
+        {
+            bool validId = false;
+            var db = new NorthwindContext();
+            int targetID = -1;
+            do
+            {
+                Console.WriteLine("Select Target Product ID: ");
+                displayAllCategoriesAndProducts();
+                String userInput = Console.ReadLine();
+                if (int.TryParse(userInput, out targetID) && db.Products.Any(p => p.ProductID == targetID))
+                {
+                    validId = true;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid Product ID");
+                }
+
+            } while (!validId);
+
+            return targetID;
+
+        }
+
+        //Selects Product, gets new Fields and Updates DataBase
+        public static void editProductInfo()
+        {
+            int targetProduct = getTargetProduct();
+            Product newProduct = getProductInfo();
+            if (validateProduct(newProduct))
+            {
+                //TODO: EDIT RECORD
+            }
+        }
+
+        //Selects category, gets new fields, and updates Database
+        public static void editCategory()
+        {
+            int targetcategory = getTargetCategory();
+            Category newCategory = getCategoryInfo();
+            if(validateCategory(newCategory))
+            {
+                //TODO: EDIT RECORD
+            }
+        }
+
+        public static void displayProductInformation()
+        {
+            int productID = getTargetProduct();
+            var db = new NorthwindContext();
+            Product product = db.Products.Find(productID);
+            Console.WriteLine($"\tID: {product.ProductID}\n\tName: {product.ProductName}\n\tCategory: {product.Category.CategoryName}\n\tSupplier: {product.Supplier.CompanyName}\n\tUnits In Stock: {product.UnitsInStock}\n\tUnits On Order: {product.UnitsOnOrder}\n\tReorder Level: {product.ReorderLevel}\n\tQuantity Per Unit: {product.QuantityPerUnit}\n\tUnit Price: {product.UnitPrice}");
+        }
+
 
     }
 }
