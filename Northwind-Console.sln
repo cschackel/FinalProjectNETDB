@@ -1,6 +1,7 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
+VisualStudioVersion = 15.0.27428.2002
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Northwind-Console", "Northwind-Console\Northwind-Console.csproj", "{45130B68-A734-407D-89D3-D22074F94C20}"
 EndProject
 Global
@@ -13,5 +14,11 @@ Global
 		{45130B68-A734-407D-89D3-D22074F94C20}.Debug|x86.Build.0 = Debug|x86
 		{45130B68-A734-407D-89D3-D22074F94C20}.Release|x86.ActiveCfg = Release|x86
 		{45130B68-A734-407D-89D3-D22074F94C20}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D0F76FDB-BB7D-45F3-A6B8-BA9D644797A5}
 	EndGlobalSection
 EndGlobal
