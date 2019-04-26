@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace NorthwindConsole.Models
@@ -7,9 +8,9 @@ namespace NorthwindConsole.Models
     {
         public int ProductID { get; set; }
         [Required(ErrorMessage = "Name Must Not Be Null")]
-        [StringLength(40,ErrorMessage ="Name Must be 40 Characters or Less")]
+        [StringLength(40, ErrorMessage = "Name Must be 40 Characters or Less")]
         public string ProductName { get; set; }
-        [StringLength(20,ErrorMessage ="Quantity must be 20 Characters or Less")]
+        [StringLength(20, ErrorMessage = "Quantity must be 20 Characters or Less")]
         public string QuantityPerUnit { get; set; }
         public decimal? UnitPrice { get; set; }
         public Int16? UnitsInStock { get; set; }
@@ -18,14 +19,14 @@ namespace NorthwindConsole.Models
         [Required(ErrorMessage = "Product Must Either be Discontinued or Not")]
         public bool Discontinued { get; set; }
 
-       
+
         public int? CategoryId { get; set; }
         public int? SupplierId { get; set; }
 
         public virtual Category Category { get; set; }
         public virtual Supplier Supplier { get; set; }
 
-
-        //public virtual OrderDetail OrderDetails { get; set; }
+        //[Column("Order Details")]
+        public virtual List<OrderDetail> OrderDetails { get; set; }
     }
 }

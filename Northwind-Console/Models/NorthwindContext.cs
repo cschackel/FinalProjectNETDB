@@ -1,17 +1,35 @@
 ﻿using System;
 using System.Data.Entity;
+using System.Data.SqlClient;
+using System.Configuration;
+//using Microsoft.EntityFrameworkCore.ModelBuilder;
+
+//using System.Data.Entity;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
 
 namespace NorthwindConsole.Models
 {
     public class NorthwindContext : DbContext
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public NorthwindContext() : base("name=NorthwindContext") { }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<OrderDetail>()
+                .HasKey(c => new { c.OrderID, c.ProductID });
+            modelBuilder.Entity<OrderDetail>()
+            .ToTable("Order Details");
+        }
 
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
 
-        //public DbSet<OrderDetail> OrderDetails { get; set; }
+        public DbSet<OrderDetail> OrderDetails { get; set; }
 
         public void addProduct(Product newProduct)
         {
@@ -52,17 +70,17 @@ namespace NorthwindConsole.Models
         {
             var productList = targetCategory.Products;
             int unassignedID = -1;
-            foreach(Category c in Categories)
+            foreach (Category c in Categories)
             {
-                if(c.CategoryName=="Not Assigned")
+                if (c.CategoryName == "Not Assigned")
                 {
                     unassignedID = c.CategoryId;
                 }
             }
-            if(unassignedID==-1)
+            if (unassignedID == -1)
             {
                 Category unnasignedCategory = new Category();
-                unnasignedCategory.CategoryName="Not Assigned";
+                unnasignedCategory.CategoryName = "Not Assigned";
                 unnasignedCategory.Description = "Products With No Category";
                 addCategory(unnasignedCategory);
                 SaveChanges();
@@ -75,18 +93,19 @@ namespace NorthwindConsole.Models
                 }
             }
 
-            foreach(Product p in productList)
+            foreach (Product p in productList)
             {
                 p.CategoryId = unassignedID;
             }
             SaveChanges();
-            if(targetCategory.CategoryId!=unassignedID)
+            if (targetCategory.CategoryId != unassignedID)
             {
                 Categories.Remove(targetCategory);
                 SaveChanges();
             }
         }
-        
+
+        /*
         public void deleteProduct(Product targetProduct)
         {
             try
@@ -104,8 +123,68 @@ namespace NorthwindConsole.Models
                 Console.WriteLine("ERROR: " + e.Message + " " + e.StackTrace +" " + e.InnerException);
             }
         }
-        
+        */
+
+        public void deleteProduct(Product targetProduct)
+        {
+            try
+            {
+                //var orders = targetProduct.OrderDetails;
+                Product p = Products.Find(targetProduct.ProductID);
+                //var prods = Products.Include(QueryableExtensions => QueryableExtensions.OrderDetails);
+                //var a = Products.Find(targetProduct.ProductID
+
+                if (p != null)
+                {
+                    logger.Info($"Product {p.ProductName} Selected");
+                    logger.Info($"OD Count { p.OrderDetails.Count}");
+                    if(p.OrderDetails.Count!=0)
+                    {
+                        OrderDetail od = null;
+                        do
+                        {
+                            od = p.OrderDetails.FirstOrDefault();
+                            if(od!=null)
+                            {
+                                logger.Info($"Order Detail OID:{od.OrderID } & PID:{od.ProductID}");
+                                deleteOrderDetails(od);
+                            }
+
+                        } while (od != null);
+
+                    }
+                    foreach (OrderDetail od in p.OrderDetails)
+                    {
+                        deleteOrderDetails(od);
+                    }
+                    //SaveChanges();
+                    Products.Remove(p);
+                    SaveChanges();
+                    logger.Info($"{p.ProductName} Deleted");
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Error("ERROR: " + e.Message + " " + e.StackTrace + " " + e.InnerException);
+            }
 
 
+        }
+
+        public void deleteOrderDetails(OrderDetail targetOD)
+        {
+            try
+            {
+                if (targetOD != null)
+                {
+                    OrderDetails.Remove(targetOD);
+                    SaveChanges();
+                    logger.Info($"Order Detail OID:{targetOD.OrderID } & PID:{targetOD.ProductID} Deleted");
+                }
+            } catch(Exception e)
+            {
+                logger.Error("ERROR: " + e.Message + " " + e.StackTrace + " " + e.InnerException);
+            }
+        }
     }
 }

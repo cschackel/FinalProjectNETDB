@@ -29,6 +29,7 @@ namespace NorthwindConsole
                     Console.WriteLine("9) Display Products");
                     Console.WriteLine("10) Delete a Product");
                     Console.WriteLine("11) Delete a Category");
+                    Console.WriteLine("12) Count a Product's Order Details (For Testing)");
                     Console.WriteLine("\"q\" to quit");
                     choice = Console.ReadLine();
                     Console.Clear();
@@ -77,6 +78,13 @@ namespace NorthwindConsole
                     else if (choice == "11")
                     {
                         deleteCategory();
+                    }
+                    else if (choice == "12")
+                    {
+                        int i = getTargetProduct();
+                        var db = new NorthwindContext();
+                        Product p = db.Products.Find(i);
+                        Console.WriteLine($"Results: {p.OrderDetails.Count}");
                     }
                     Console.WriteLine();
 
@@ -794,8 +802,8 @@ namespace NorthwindConsole
             {
                 case 1:
                     db.deleteProduct(targetProduct);
-                    Console.WriteLine("Product Deleted");
-                    logger.Info($"Product {targetProduct.ProductName} Deleted");
+                    //Console.WriteLine("Product Deleted");
+                    //logger.Info($"Product {targetProduct.ProductName} Deleted");
                     break;
                 case 2:
                     targetProduct.Discontinued = true;
