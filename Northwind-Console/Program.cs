@@ -20,23 +20,27 @@ namespace NorthwindConsole
                 {
                     Console.WriteLine("1) Display Categories");
                     Console.WriteLine("2) Add Category");
-                    Console.WriteLine("3) Display Category and related products");
+                    Console.WriteLine("3) Display A Category and related products");
                     Console.WriteLine("4) Display all Categories and their related products");
                     Console.WriteLine("5) Add Product");
                     Console.WriteLine("6) Display Specific Product Information");
                     Console.WriteLine("7) Edit Product");
+                    Console.WriteLine("8) Edit Category");
+                    Console.WriteLine("9) Display Products");
+                    Console.WriteLine("10) Delete a Product");
+                    Console.WriteLine("11) Delete a Category");
                     Console.WriteLine("\"q\" to quit");
                     choice = Console.ReadLine();
                     Console.Clear();
                     logger.Info($"Option {choice} selected");
+
                     if (choice == "1")
                     {
-                        displayCategories();
+                        displayCategoriesAndDescription();
                     } 
                     else if (choice == "2")
                     {
                         addCategory();
-
                     }
                     else if (choice == "3")
                     {
@@ -49,16 +53,30 @@ namespace NorthwindConsole
                     else if(choice=="5")
                     {
                         addProduct();
-
                     }
                     else if(choice=="6")
                     {
                         displayProductInformation();
-
                     }
                     else if(choice=="7")
                     {
-
+                        editProductInfo();
+                    }
+                    else if (choice == "8")
+                    {
+                        editCategory();
+                    }
+                    else if (choice == "9")
+                    {
+                        displayProducts();
+                    }
+                    else if (choice == "10")
+                    {
+                        deleteProduct();
+                    }
+                    else if (choice == "11")
+                    {
+                        deleteCategory();
                     }
                     Console.WriteLine();
 
@@ -66,7 +84,7 @@ namespace NorthwindConsole
             }
             catch (Exception ex)
             {
-                logger.Error(ex.Message);
+                logger.Error("Message: "+ex.Message + "\nInner: "  + ex.InnerException + "\nStack: " + ex.StackTrace);
             }
             logger.Info("Program ended");
         }
@@ -77,7 +95,8 @@ namespace NorthwindConsole
             Product newProduct = getProductInfo();
             if(validateProduct(newProduct))
             {
-                //TODO: Add to table
+                var db = new NorthwindContext();
+                db.addProduct(newProduct);
             }
         }
 
@@ -87,22 +106,22 @@ namespace NorthwindConsole
             Category newCategory = getCategoryInfo();
             if(validateCategory(newCategory))
             {
-                //TODO: ADD RECORD
+                var db = new NorthwindContext();
+                db.addCategory(newCategory);
             }
         }
 
+        /*
         //Adds a new Supplier to database
         public static void addSupplier()
         {
             Supplier newSupplier = getSupplierinfo();
             if(validateSupplier(newSupplier))
             {
-                //TODO: Add to DataBase
+                
             }
         }
-
-
-
+        */
 
         //Displays All Suppliers
         public static void displaySuppliers()
@@ -266,7 +285,6 @@ namespace NorthwindConsole
                 {
                     logger.Info("Validation passed");
                     return true;
-                    // TODO: save category to db
                 }
             }
             if (!isValid)
@@ -470,7 +488,6 @@ namespace NorthwindConsole
                 {
                     logger.Info("Validation passed");
                     return true;
-                    // TODO: save category to db
                 }
             }
             if (!isValid)
@@ -493,12 +510,48 @@ namespace NorthwindConsole
                 Console.WriteLine($"{item.CategoryName}");
                 foreach (Product p in item.Products)
                 {
-                    if(p.Discontinued)
+                    if(p.Discontinued==false)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"\tID: {p.ProductID}\tName:{p.ProductName}");
+                        Console.ResetColor();
                     }
-                    Console.WriteLine($"\tID: {p.ProductID}\tName:{p.ProductName}");
-                    Console.ResetColor();
+                }
+            }
+        }
+
+        public static void displayAllCategoriesAndProducts(bool all)
+        {
+            var db = new NorthwindContext();
+            var query = db.Categories.Include("Products").OrderBy(p => p.CategoryId);
+            if(!all)
+            {
+                foreach (var item in query)
+                {
+                    Console.WriteLine($"{item.CategoryName}");
+                    foreach (Product p in item.Products)
+                    {
+                        if (p.Discontinued == false)
+                        {
+                            Console.WriteLine($"\tID: {p.ProductID}\tName:{p.ProductName}");
+                            Console.ResetColor();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                foreach (var item in query)
+                {
+                    Console.WriteLine($"{item.CategoryName}");
+                    foreach (Product p in item.Products)
+                    {
+                        if(p.Discontinued==true)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                        }
+                        Console.WriteLine($"\tID: {p.ProductID}\tName:{p.ProductName}");
+                        Console.ResetColor();
+                    }
                 }
             }
         }
@@ -514,7 +567,10 @@ namespace NorthwindConsole
             Console.WriteLine($"{category.CategoryName} - {category.Description}");
             foreach (Product p in category.Products)
             {
-                Console.WriteLine(p.ProductName);
+                if (p.Discontinued == false)
+                {
+                    Console.WriteLine(p.ProductName);
+                }
             }
         }
 
@@ -552,7 +608,7 @@ namespace NorthwindConsole
             do
             {
                 Console.WriteLine("Select Target Product ID: ");
-                displayAllCategoriesAndProducts();
+                displayAllCategoriesAndProducts(true);
                 String userInput = Console.ReadLine();
                 if (int.TryParse(userInput, out targetID) && db.Products.Any(p => p.ProductID == targetID))
                 {
@@ -574,31 +630,188 @@ namespace NorthwindConsole
         {
             int targetProduct = getTargetProduct();
             Product newProduct = getProductInfo();
+            newProduct.ProductID = targetProduct;
             if (validateProduct(newProduct))
             {
-                //TODO: EDIT RECORD
+                var db = new NorthwindContext();
+                db.updateProduct(newProduct);
             }
         }
 
         //Selects category, gets new fields, and updates Database
         public static void editCategory()
         {
-            int targetcategory = getTargetCategory();
+            int targetCategory = getTargetCategory();
             Category newCategory = getCategoryInfo();
+            newCategory.CategoryId = targetCategory;
             if(validateCategory(newCategory))
             {
-                //TODO: EDIT RECORD
+                var db = new NorthwindContext();
+                db.updateCategory(newCategory);
             }
         }
 
+        //Displays all Information on a Specific Product
         public static void displayProductInformation()
         {
             int productID = getTargetProduct();
             var db = new NorthwindContext();
             Product product = db.Products.Find(productID);
-            Console.WriteLine($"\tID: {product.ProductID}\n\tName: {product.ProductName}\n\tCategory: {product.Category.CategoryName}\n\tSupplier: {product.Supplier.CompanyName}\n\tUnits In Stock: {product.UnitsInStock}\n\tUnits On Order: {product.UnitsOnOrder}\n\tReorder Level: {product.ReorderLevel}\n\tQuantity Per Unit: {product.QuantityPerUnit}\n\tUnit Price: {product.UnitPrice}");
+            if(product.Discontinued==true)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+            }
+            Console.WriteLine($"\tID: {product.ProductID}\n\tName: {product.ProductName}\n\tCategory: {product.Category.CategoryName}\n\tSupplier: {product.Supplier.CompanyName}\n\tUnits In Stock: {product.UnitsInStock}\n\tUnits On Order: {product.UnitsOnOrder}\n\tReorder Level: {product.ReorderLevel}\n\tQuantity Per Unit: {product.QuantityPerUnit}\n\tUnit Price: {product.UnitPrice}\n\tDiscontinued: {product.Discontinued.ToString()}");
+            Console.ResetColor();
         }
 
+        //Displays all categories and their Description
+        public static void displayCategoriesAndDescription()
+        {
+            var db = new NorthwindContext();
+            var query = db.Categories.OrderBy(p => p.CategoryName);
+            foreach (var item in query)
+            {
+                Console.WriteLine($"\tName: {item.CategoryName}\n\tDescription: {item.Description}\n");
+            }
+        }
+
+        //Display All Products, Discontinued, or Active
+        public static void displayProducts()
+        {
+            int option = -1;
+            bool validChoice = false;
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("1) Display All Products");
+                Console.WriteLine("2) Display Active Products");
+                Console.WriteLine("3) Display Discontinued Products");
+                String userInput = Console.ReadLine();
+                if(int.TryParse(userInput,out option)&&option>=1&&option<=3)
+                {
+                    validChoice = true;
+                }
+            } while (!validChoice);
+            var db = new NorthwindContext();
+            switch(option)
+            {
+                case 1:  //All Products
+                    var allProducts = db.Products.OrderBy(p=>p.ProductName);
+                    foreach(Product p in allProducts)
+                    {
+                        if(p.Discontinued==true)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                        }
+                        Console.WriteLine($"{p.ProductName}");
+                        Console.ResetColor();
+                    }
+                    break;
+                case 2:  //Active Products
+                    var activeProducts = db.Products.Where(p=>p.Discontinued==false).OrderBy(p => p.ProductName);
+                    foreach (Product p in activeProducts)
+                    {
+                        Console.WriteLine($"{p.ProductName}");
+                        Console.ResetColor();
+                    }
+                    break;
+                case 3:  //Discontinued Products
+                    var discontinuedProducts = db.Products.Where(p=>p.Discontinued==true).OrderBy(p => p.ProductName);
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    foreach (Product p in discontinuedProducts)
+                    {
+                        Console.WriteLine($"{p.ProductName}");
+                    }
+                    Console.ResetColor();
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public static void deleteCategory()
+        {
+            int categoryID = getTargetCategory();
+            var db = new NorthwindContext();
+            Category targetCategory = db.Categories.Find(categoryID);
+            bool validResponce = false;
+            bool delete = false;
+            do
+            {
+                Console.WriteLine($"Are You Sure You Want To Delete {targetCategory.CategoryName}?(Y/N)\nAll Products in {targetCategory.CategoryName} will become Unassigned.");
+                String yOrN = Console.ReadLine().ToUpper();
+                if (yOrN.Equals("Y") || yOrN.Equals("N"))
+                {
+                    delete = yOrN.Equals("Y") ? true : false;
+                    validResponce = true;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid Choice");
+                }
+            } while (!validResponce);
+            if (delete)
+            {
+                logger.Info($"Deleting Category {targetCategory.CategoryName}");
+                Console.WriteLine($"Deleting {targetCategory.CategoryName}");
+                db.deleteCategory(targetCategory);
+            }
+            else
+            {
+                Console.WriteLine("Delete Aborted");
+            }
+            Console.WriteLine("\n");
+        }
+
+        public static void deleteProduct()
+        {
+            int productID = getTargetProduct();
+            var db = new NorthwindContext();
+            Product targetProduct = db.Products.Find(productID);
+            bool validResponce = false;
+            int action = -1;
+            do
+            {
+                Console.WriteLine($"Are You Sure You Want To Delete {targetProduct.ProductName}?\nAll Orders Of {targetProduct.ProductName} will be deleted.");
+                Console.WriteLine("Consider Discontinuing Product. No Orders will be lost.");
+                Console.WriteLine("1) Delete");
+                Console.WriteLine("2) Discontinue");
+                Console.WriteLine("3) Abort");
+                String choice = Console.ReadLine();
+                if(int.TryParse(choice, out action)&&action>=1&&action<=3)
+                {
+                    validResponce = true;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid Choice");
+                }
+
+            } while (!validResponce);
+
+            switch(action)
+            {
+                case 1:
+                    db.deleteProduct(targetProduct);
+                    Console.WriteLine("Product Deleted");
+                    logger.Info($"Product {targetProduct.ProductName} Deleted");
+                    break;
+                case 2:
+                    targetProduct.Discontinued = true;
+                    db.updateProduct(targetProduct);
+                    Console.WriteLine("Product Discontinued");
+                    logger.Info($"Product {targetProduct.ProductName} Discontinued");
+                    break;
+                case 3:
+                    Console.WriteLine("Delete Aborted");
+                    break;
+                default:
+
+                    break;
+            }
+            Console.WriteLine("\n");
+        }
 
     }
 }
