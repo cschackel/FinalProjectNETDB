@@ -33,57 +33,73 @@ namespace NorthwindConsole.Models
 
         public void addProduct(Product newProduct)
         {
-            Products.Add(newProduct);
-            SaveChanges();
+            try
+            {
+                Products.Add(newProduct);
+                SaveChanges();
+            }
+            catch(Exception e)
+            {
+                logger.Error($"Error Adding Product {newProduct.ProductName}: {e.Message}");
+            }
         }
 
         public void addCategory(Category newCategory)
         {
-            Categories.Add(newCategory);
-            SaveChanges();
+            try
+            {
+                Categories.Add(newCategory);
+                SaveChanges();
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Error Adding Category {newCategory.CategoryName}: {e.Message}");
+            }
         }
 
         public void updateProduct(Product updatedProduct)
         {
-            Product p = Products.Find(updatedProduct.ProductID);
-            p.ProductName = updatedProduct.ProductName;
-            p.CategoryId = updatedProduct.CategoryId;
-            p.SupplierId = updatedProduct.SupplierId;
-            p.UnitPrice = updatedProduct.UnitPrice;
-            p.UnitsInStock = updatedProduct.UnitsInStock;
-            p.UnitsOnOrder = updatedProduct.UnitsOnOrder;
-            p.Discontinued = updatedProduct.Discontinued;
-            p.ReorderLevel = updatedProduct.ReorderLevel;
-            p.QuantityPerUnit = updatedProduct.QuantityPerUnit;
-            SaveChanges();
+            try
+            {
+                Product p = Products.Find(updatedProduct.ProductID);
+                p.ProductName = updatedProduct.ProductName;
+                p.CategoryId = updatedProduct.CategoryId;
+                p.SupplierId = updatedProduct.SupplierId;
+                p.UnitPrice = updatedProduct.UnitPrice;
+                p.UnitsInStock = updatedProduct.UnitsInStock;
+                p.UnitsOnOrder = updatedProduct.UnitsOnOrder;
+                p.Discontinued = updatedProduct.Discontinued;
+                p.ReorderLevel = updatedProduct.ReorderLevel;
+                p.QuantityPerUnit = updatedProduct.QuantityPerUnit;
+                SaveChanges();
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Error Updating Product {updatedProduct.ProductName}: {e.Message}");
+            }
         }
 
         public void updateCategory(Category updatedCategory)
         {
-            Category c = Categories.Find(updatedCategory.CategoryId);
-            c.CategoryName = updatedCategory.CategoryName;
-            c.Description = updatedCategory.Description;
-            SaveChanges();
+            try
+            {
+                Category c = Categories.Find(updatedCategory.CategoryId);
+                c.CategoryName = updatedCategory.CategoryName;
+                c.Description = updatedCategory.Description;
+                SaveChanges();
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Error Updating Category {updatedCategory.CategoryName}: {e.Message}");
+            }
         }
 
         public void deleteCategory(Category targetCategory)
         {
-            var productList = targetCategory.Products;
-            int unassignedID = -1;
-            foreach (Category c in Categories)
+            try
             {
-                if (c.CategoryName == "Not Assigned")
-                {
-                    unassignedID = c.CategoryId;
-                }
-            }
-            if (unassignedID == -1)
-            {
-                Category unnasignedCategory = new Category();
-                unnasignedCategory.CategoryName = "Not Assigned";
-                unnasignedCategory.Description = "Products With No Category";
-                addCategory(unnasignedCategory);
-                SaveChanges();
+                var productList = targetCategory.Products;
+                int unassignedID = -1;
                 foreach (Category c in Categories)
                 {
                     if (c.CategoryName == "Not Assigned")
@@ -91,17 +107,36 @@ namespace NorthwindConsole.Models
                         unassignedID = c.CategoryId;
                     }
                 }
-            }
+                if (unassignedID == -1)
+                {
+                    Category unnasignedCategory = new Category();
+                    unnasignedCategory.CategoryName = "Not Assigned";
+                    unnasignedCategory.Description = "Products With No Category";
+                    addCategory(unnasignedCategory);
+                    SaveChanges();
+                    foreach (Category c in Categories)
+                    {
+                        if (c.CategoryName == "Not Assigned")
+                        {
+                            unassignedID = c.CategoryId;
+                        }
+                    }
+                }
 
-            foreach (Product p in productList)
-            {
-                p.CategoryId = unassignedID;
-            }
-            SaveChanges();
-            if (targetCategory.CategoryId != unassignedID)
-            {
-                Categories.Remove(targetCategory);
+                foreach (Product p in productList)
+                {
+                    p.CategoryId = unassignedID;
+                }
                 SaveChanges();
+                if (targetCategory.CategoryId != unassignedID)
+                {
+                    Categories.Remove(targetCategory);
+                    SaveChanges();
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Error Removing Category {targetCategory.CategoryName}: {e.Message}");
             }
         }
 
@@ -165,7 +200,7 @@ namespace NorthwindConsole.Models
             }
             catch (Exception e)
             {
-                logger.Error("ERROR: " + e.Message + " " + e.StackTrace + " " + e.InnerException);
+                logger.Error($"Error deleting Product {targetProduct.ProductName}: {e.Message}");
             }
 
 
@@ -183,7 +218,7 @@ namespace NorthwindConsole.Models
                 }
             } catch(Exception e)
             {
-                logger.Error("ERROR: " + e.Message + " " + e.StackTrace + " " + e.InnerException);
+                logger.Error($"Error Deleting Order Detail with Order ID {targetOD.OrderID} and Product ID {targetOD.ProductID}: {e.Message}");
             }
         }
     }

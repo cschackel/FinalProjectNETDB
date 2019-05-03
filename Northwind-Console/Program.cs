@@ -81,10 +81,17 @@ namespace NorthwindConsole
                     }
                     else if (choice == "12")
                     {
-                        int i = getTargetProduct();
-                        var db = new NorthwindContext();
-                        Product p = db.Products.Find(i);
-                        Console.WriteLine($"Results: {p.OrderDetails.Count}");
+                        try
+                        {
+                            int i = getTargetProduct();
+                            var db = new NorthwindContext();
+                            Product p = db.Products.Find(i);
+                            Console.WriteLine($"Results: {p.OrderDetails.Count}");
+                        }
+                        catch (Exception e)
+                        {
+                            logger.Error($"Error Displaying OD Count for Product: {e.Message}");
+                        }
                     }
                     Console.WriteLine();
 
@@ -106,6 +113,10 @@ namespace NorthwindConsole
                 var db = new NorthwindContext();
                 db.addProduct(newProduct);
             }
+            else
+            {
+                Console.WriteLine("Validation Failed\nProcess Aborted");
+            }
         }
 
         //Adds a new category to database
@@ -116,6 +127,10 @@ namespace NorthwindConsole
             {
                 var db = new NorthwindContext();
                 db.addCategory(newCategory);
+            }
+            else
+            {
+                Console.WriteLine("Validation Failed\nProcess Aborted");
             }
         }
 
@@ -567,44 +582,58 @@ namespace NorthwindConsole
         //DPrompts user for category, then displays all products
         public static void displayCategoryProducts()
         {
-            int id = getTargetCategory();
-            var db = new NorthwindContext();
-            Console.Clear();
-            logger.Info($"CategoryId {id} selected");
-            Category category = db.Categories.FirstOrDefault(c => c.CategoryId == id);
-            Console.WriteLine($"{category.CategoryName} - {category.Description}");
-            foreach (Product p in category.Products)
+            try
             {
-                if (p.Discontinued == false)
+                int id = getTargetCategory();
+                var db = new NorthwindContext();
+                Console.Clear();
+                logger.Info($"CategoryId {id} selected");
+                Category category = db.Categories.FirstOrDefault(c => c.CategoryId == id);
+                Console.WriteLine($"{category.CategoryName} - {category.Description}");
+                foreach (Product p in category.Products)
                 {
-                    Console.WriteLine(p.ProductName);
+                    if (p.Discontinued == false)
+                    {
+                        Console.WriteLine(p.ProductName);
+                    }
                 }
+            }
+            catch(Exception e)
+            {
+                logger.Error($"Error Displaing Category's Products: {e.Message}");
             }
         }
 
         //Prompts user for valid Category ID, returns ID
         public static int getTargetCategory()
-        {
+        { 
             bool validId = false;
             var db = new NorthwindContext();
-            int targetID = -1;
-            do
+            if(db.Categories.Count()>0)
             {
-                Console.WriteLine("Select Target Category ID: ");
-                displayCategories();
-                String userInput = Console.ReadLine();
-                if (int.TryParse(userInput, out targetID) && db.Categories.Any(c => c.CategoryId == targetID))
+                int targetID = -1;
+                do
                 {
-                    validId = true;
-                }
-                else
-                {
-                    Console.WriteLine("Invalid Category ID");
-                }
+                    Console.WriteLine("Select Target Category ID: ");
+                    displayCategories();
+                    String userInput = Console.ReadLine();
+                    if (int.TryParse(userInput, out targetID) && db.Categories.Any(c => c.CategoryId == targetID))
+                    {
+                        validId = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid Category ID");
+                    }
 
-            } while (!validId);
+                } while (!validId);
 
-            return targetID;
+                return targetID;
+            }
+            else
+            {
+                throw new Exception("No Categories Avalible");
+            }
         }
 
         //Prompts User for valid Product ID, returns ID
@@ -612,65 +641,96 @@ namespace NorthwindConsole
         {
             bool validId = false;
             var db = new NorthwindContext();
-            int targetID = -1;
-            do
+            if(db.Products.Count()>0)
             {
-                Console.WriteLine("Select Target Product ID: ");
-                displayAllCategoriesAndProducts(true);
-                String userInput = Console.ReadLine();
-                if (int.TryParse(userInput, out targetID) && db.Products.Any(p => p.ProductID == targetID))
+                int targetID = -1;
+                do
                 {
-                    validId = true;
-                }
-                else
-                {
-                    Console.WriteLine("Invalid Product ID");
-                }
+                    Console.WriteLine("Select Target Product ID: ");
+                    displayAllCategoriesAndProducts(true);
+                    String userInput = Console.ReadLine();
+                    if (int.TryParse(userInput, out targetID) && db.Products.Any(p => p.ProductID == targetID))
+                    {
+                        validId = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid Product ID");
+                    }
 
-            } while (!validId);
+                } while (!validId);
 
-            return targetID;
-
+                return targetID;
+            }
+            else
+            {
+                throw new Exception("No Products Avalible");
+            }
         }
 
         //Selects Product, gets new Fields and Updates DataBase
         public static void editProductInfo()
         {
-            int targetProduct = getTargetProduct();
-            Product newProduct = getProductInfo();
-            newProduct.ProductID = targetProduct;
-            if (validateProduct(newProduct))
+            try
             {
-                var db = new NorthwindContext();
-                db.updateProduct(newProduct);
+                int targetProduct = getTargetProduct();
+                Product newProduct = getProductInfo();
+                newProduct.ProductID = targetProduct;
+                if (validateProduct(newProduct))
+                {
+                    var db = new NorthwindContext();
+                    db.updateProduct(newProduct);
+                }
+                else
+                {
+                    Console.WriteLine("Validation Failed\nProcess Aborted");
+                }
+            }
+            catch(Exception e)
+            {
+                logger.Error($"Error Editing Product: {e.Message}");
             }
         }
 
         //Selects category, gets new fields, and updates Database
         public static void editCategory()
         {
-            int targetCategory = getTargetCategory();
-            Category newCategory = getCategoryInfo();
-            newCategory.CategoryId = targetCategory;
-            if(validateCategory(newCategory))
+            try
             {
-                var db = new NorthwindContext();
-                db.updateCategory(newCategory);
+                int targetCategory = getTargetCategory();
+                Category newCategory = getCategoryInfo();
+                newCategory.CategoryId = targetCategory;
+                if (validateCategory(newCategory))
+                {
+                    var db = new NorthwindContext();
+                    db.updateCategory(newCategory);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Error Editing Category: {e.Message}");
             }
         }
 
         //Displays all Information on a Specific Product
         public static void displayProductInformation()
         {
-            int productID = getTargetProduct();
-            var db = new NorthwindContext();
-            Product product = db.Products.Find(productID);
-            if(product.Discontinued==true)
+            try
             {
-                Console.ForegroundColor = ConsoleColor.Red;
+                int productID = getTargetProduct();
+                var db = new NorthwindContext();
+                Product product = db.Products.Find(productID);
+                if (product.Discontinued == true)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                }
+                Console.WriteLine($"\tID: {product.ProductID}\n\tName: {product.ProductName}\n\tCategory: {product.Category.CategoryName}\n\tSupplier: {product.Supplier.CompanyName}\n\tUnits In Stock: {product.UnitsInStock}\n\tUnits On Order: {product.UnitsOnOrder}\n\tReorder Level: {product.ReorderLevel}\n\tQuantity Per Unit: {product.QuantityPerUnit}\n\tUnit Price: {product.UnitPrice}\n\tDiscontinued: {product.Discontinued.ToString()}");
+                Console.ResetColor();
             }
-            Console.WriteLine($"\tID: {product.ProductID}\n\tName: {product.ProductName}\n\tCategory: {product.Category.CategoryName}\n\tSupplier: {product.Supplier.CompanyName}\n\tUnits In Stock: {product.UnitsInStock}\n\tUnits On Order: {product.UnitsOnOrder}\n\tReorder Level: {product.ReorderLevel}\n\tQuantity Per Unit: {product.QuantityPerUnit}\n\tUnit Price: {product.UnitPrice}\n\tDiscontinued: {product.Discontinued.ToString()}");
-            Console.ResetColor();
+            catch (Exception e)
+            {
+                logger.Error($"Error Displaying Product: {e.Message}");
+            }
         }
 
         //Displays all categories and their Description
@@ -705,6 +765,9 @@ namespace NorthwindConsole
             switch(option)
             {
                 case 1:  //All Products
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Discontinued Products Shown in Red");
+                    Console.ResetColor();
                     var allProducts = db.Products.OrderBy(p=>p.ProductName);
                     foreach(Product p in allProducts)
                     {
@@ -740,85 +803,100 @@ namespace NorthwindConsole
 
         public static void deleteCategory()
         {
-            int categoryID = getTargetCategory();
-            var db = new NorthwindContext();
-            Category targetCategory = db.Categories.Find(categoryID);
-            bool validResponce = false;
-            bool delete = false;
-            do
+            try
             {
-                Console.WriteLine($"Are You Sure You Want To Delete {targetCategory.CategoryName}?(Y/N)\nAll Products in {targetCategory.CategoryName} will become Unassigned.");
-                String yOrN = Console.ReadLine().ToUpper();
-                if (yOrN.Equals("Y") || yOrN.Equals("N"))
+                int categoryID = getTargetCategory();
+                var db = new NorthwindContext();
+                Category targetCategory = db.Categories.Find(categoryID);
+                bool validResponce = false;
+                bool delete = false;
+                do
                 {
-                    delete = yOrN.Equals("Y") ? true : false;
-                    validResponce = true;
+                    Console.WriteLine($"Are You Sure You Want To Delete {targetCategory.CategoryName}?(Y/N)\nAll Products in {targetCategory.CategoryName} will become Unassigned.");
+                    String yOrN = Console.ReadLine().ToUpper();
+                    if (yOrN.Equals("Y") || yOrN.Equals("N"))
+                    {
+                        delete = yOrN.Equals("Y") ? true : false;
+                        validResponce = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid Choice");
+                    }
+                } while (!validResponce);
+                if (delete)
+                {
+                    Console.WriteLine($"Deleting {targetCategory.CategoryName}");
+                    db.deleteCategory(targetCategory);
+                    //logger.Info($"Deleting Category {targetCategory.CategoryName}");
                 }
                 else
                 {
-                    Console.WriteLine("Invalid Choice");
+                    Console.WriteLine("Delete Aborted");
                 }
-            } while (!validResponce);
-            if (delete)
-            {
-                logger.Info($"Deleting Category {targetCategory.CategoryName}");
-                Console.WriteLine($"Deleting {targetCategory.CategoryName}");
-                db.deleteCategory(targetCategory);
+                Console.WriteLine("\n");
             }
-            else
+            catch (Exception e)
             {
-                Console.WriteLine("Delete Aborted");
+                logger.Error($"Error Deleting Category: {e.Message}");
             }
-            Console.WriteLine("\n");
         }
 
         public static void deleteProduct()
         {
-            int productID = getTargetProduct();
-            var db = new NorthwindContext();
-            Product targetProduct = db.Products.Find(productID);
-            bool validResponce = false;
-            int action = -1;
-            do
+            try
             {
-                Console.WriteLine($"Are You Sure You Want To Delete {targetProduct.ProductName}?\nAll Orders Of {targetProduct.ProductName} will be deleted.");
-                Console.WriteLine("Consider Discontinuing Product. No Orders will be lost.");
-                Console.WriteLine("1) Delete");
-                Console.WriteLine("2) Discontinue");
-                Console.WriteLine("3) Abort");
-                String choice = Console.ReadLine();
-                if(int.TryParse(choice, out action)&&action>=1&&action<=3)
+                int productID = getTargetProduct();
+                var db = new NorthwindContext();
+                Product targetProduct = db.Products.Find(productID);
+                bool validResponce = false;
+                int action = -1;
+                do
                 {
-                    validResponce = true;
-                }
-                else
+                    Console.WriteLine($"Are You Sure You Want To Delete {targetProduct.ProductName}?\nAll Orders Of {targetProduct.ProductName} will be deleted.");
+                    Console.WriteLine("Consider Discontinuing Product. No Orders will be lost.");
+                    Console.WriteLine("1) Delete");
+                    Console.WriteLine("2) Discontinue");
+                    Console.WriteLine("3) Abort");
+                    String choice = Console.ReadLine();
+                    if (int.TryParse(choice, out action) && action >= 1 && action <= 3)
+                    {
+                        validResponce = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid Choice");
+                    }
+
+                } while (!validResponce);
+
+                switch (action)
                 {
-                    Console.WriteLine("Invalid Choice");
+                    case 1:
+                        db.deleteProduct(targetProduct);
+                        Console.WriteLine("Product Deleted");
+                        logger.Info($"Product {targetProduct.ProductName} Deleted");
+                        break;
+                    case 2:
+                        targetProduct.Discontinued = true;
+                        db.updateProduct(targetProduct);
+                        Console.WriteLine("Product Discontinued");
+                        logger.Info($"Product {targetProduct.ProductName} Discontinued");
+                        break;
+                    case 3:
+                        Console.WriteLine("Delete Aborted");
+                        logger.Info($"Removal of Product {targetProduct.ProductName} Aborted");
+                        break;
+                    default:
+
+                        break;
                 }
-
-            } while (!validResponce);
-
-            switch(action)
-            {
-                case 1:
-                    db.deleteProduct(targetProduct);
-                    //Console.WriteLine("Product Deleted");
-                    //logger.Info($"Product {targetProduct.ProductName} Deleted");
-                    break;
-                case 2:
-                    targetProduct.Discontinued = true;
-                    db.updateProduct(targetProduct);
-                    Console.WriteLine("Product Discontinued");
-                    logger.Info($"Product {targetProduct.ProductName} Discontinued");
-                    break;
-                case 3:
-                    Console.WriteLine("Delete Aborted");
-                    break;
-                default:
-
-                    break;
+                Console.WriteLine("\n");
             }
-            Console.WriteLine("\n");
+            catch (Exception e)
+            {
+                logger.Error($"Error Deleting Product: {e.Message}");
+            }
         }
 
     }
