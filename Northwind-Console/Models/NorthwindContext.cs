@@ -35,12 +35,16 @@ namespace NorthwindConsole.Models
         {
             try
             {
+                if(newProduct.CategoryId==null)
+                {
+                    newProduct.CategoryId = getIndexOfUnassignedCat();
+                }
                 Products.Add(newProduct);
                 SaveChanges();
             }
             catch(Exception e)
             {
-                logger.Error($"Error Adding Product {newProduct.ProductName}: {e.Message}");
+                logger.Error($"Error Adding Product {newProduct.ProductName}: {e.Message}\n{e.StackTrace}");
             }
         }
 
@@ -53,7 +57,7 @@ namespace NorthwindConsole.Models
             }
             catch (Exception e)
             {
-                logger.Error($"Error Adding Category {newCategory.CategoryName}: {e.Message}");
+                logger.Error($"Error Adding Category {newCategory.CategoryName}: {e.Message}\n{e.InnerException}");
             }
         }
 
@@ -63,7 +67,17 @@ namespace NorthwindConsole.Models
             {
                 Product p = Products.Find(updatedProduct.ProductID);
                 p.ProductName = updatedProduct.ProductName;
-                p.CategoryId = updatedProduct.CategoryId;
+                if(updatedProduct.CategoryId==null)
+                {
+                    p.CategoryId = getIndexOfUnassignedCat();
+                }
+                else
+                {
+                    p.CategoryId = updatedProduct.CategoryId;
+
+                }
+                
+                //p.CategoryId = updatedProduct.CategoryId;
                 p.SupplierId = updatedProduct.SupplierId;
                 p.UnitPrice = updatedProduct.UnitPrice;
                 p.UnitsInStock = updatedProduct.UnitsInStock;
@@ -75,7 +89,7 @@ namespace NorthwindConsole.Models
             }
             catch (Exception e)
             {
-                logger.Error($"Error Updating Product {updatedProduct.ProductName}: {e.Message}");
+                logger.Error($"Error Updating Product {updatedProduct.ProductName}: {e.Message}\n{e.StackTrace}");
             }
         }
 
@@ -99,29 +113,7 @@ namespace NorthwindConsole.Models
             try
             {
                 var productList = targetCategory.Products;
-                int unassignedID = -1;
-                foreach (Category c in Categories)
-                {
-                    if (c.CategoryName == "Not Assigned")
-                    {
-                        unassignedID = c.CategoryId;
-                    }
-                }
-                if (unassignedID == -1)
-                {
-                    Category unnasignedCategory = new Category();
-                    unnasignedCategory.CategoryName = "Not Assigned";
-                    unnasignedCategory.Description = "Products With No Category";
-                    addCategory(unnasignedCategory);
-                    SaveChanges();
-                    foreach (Category c in Categories)
-                    {
-                        if (c.CategoryName == "Not Assigned")
-                        {
-                            unassignedID = c.CategoryId;
-                        }
-                    }
-                }
+                int unassignedID = getIndexOfUnassignedCat();
 
                 foreach (Product p in productList)
                 {
@@ -220,6 +212,40 @@ namespace NorthwindConsole.Models
             {
                 logger.Error($"Error Deleting Order Detail with Order ID {targetOD.OrderID} and Product ID {targetOD.ProductID}: {e.Message}");
             }
+        }
+
+        private void createUnassignedCategory()
+        {
+            Category unnasignedCategory = new Category();
+            unnasignedCategory.CategoryName = "Not Assigned";
+            unnasignedCategory.Description = "Products With No Category";
+            addCategory(unnasignedCategory);
+            SaveChanges();
+        }
+
+        private int getIndexOfUnassignedCat()
+        {
+            int unassignedID = -1;
+            foreach (Category c in Categories)
+            {
+                if (c.CategoryName == "Not Assigned")
+                {
+                    unassignedID = c.CategoryId;
+                }
+            }
+            if (unassignedID == -1)
+            {
+                createUnassignedCategory();
+                foreach (Category c in Categories)
+                {
+                    if (c.CategoryName == "Not Assigned")
+                    {
+                        unassignedID = c.CategoryId;
+                    }
+                }
+            }
+            return unassignedID;
+
         }
     }
 }

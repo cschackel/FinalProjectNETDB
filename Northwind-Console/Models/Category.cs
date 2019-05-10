@@ -7,6 +7,7 @@ namespace NorthwindConsole.Models
     {
         public int CategoryId { get; set; }
         [Required(ErrorMessage = "Category Must Have a Name")]
+        [StringLength(15,ErrorMessage = "Name must be 15 Characters or Less")]
         public string CategoryName { get; set; }
         public string Description { get; set; }
 

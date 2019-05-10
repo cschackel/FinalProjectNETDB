@@ -705,6 +705,10 @@ namespace NorthwindConsole
                     var db = new NorthwindContext();
                     db.updateCategory(newCategory);
                 }
+                else
+                {
+                    Console.WriteLine("Validation Failed\nProcess Aborted");
+                }
             }
             catch (Exception e)
             {
@@ -720,16 +724,37 @@ namespace NorthwindConsole
                 int productID = getTargetProduct();
                 var db = new NorthwindContext();
                 Product product = db.Products.Find(productID);
-                if (product.Discontinued == true)
+                
+                if (product != null)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
+                    if (product.Discontinued == true)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                    }
+                    String displaySupplier="No Supplier";
+
+                    if(product.SupplierId!=null)
+                    {
+                        displaySupplier = product.Supplier.CompanyName;
+                    }
+
+                    Console.WriteLine($"\t" +
+                        $"ID: {product.ProductID}\n\t" +
+                        $"Name: {product.ProductName}\n\t" +
+                        $"Category: {product.Category.CategoryName}\n\t" +
+                        $"Supplier: {displaySupplier}\n\t" +
+                        $"Units In Stock: {product.UnitsInStock}\n\t" +
+                        $"Units On Order: {product.UnitsOnOrder}\n\t" +
+                        $"Reorder Level: {product.ReorderLevel}\n\t" +
+                        $"Quantity Per Unit: {product.QuantityPerUnit}\n\t" +
+                        $"Unit Price: {product.UnitPrice}\n\t" +
+                        $"Discontinued: {product.Discontinued.ToString()}");
+                    Console.ResetColor();
                 }
-                Console.WriteLine($"\tID: {product.ProductID}\n\tName: {product.ProductName}\n\tCategory: {product.Category.CategoryName}\n\tSupplier: {product.Supplier.CompanyName}\n\tUnits In Stock: {product.UnitsInStock}\n\tUnits On Order: {product.UnitsOnOrder}\n\tReorder Level: {product.ReorderLevel}\n\tQuantity Per Unit: {product.QuantityPerUnit}\n\tUnit Price: {product.UnitPrice}\n\tDiscontinued: {product.Discontinued.ToString()}");
-                Console.ResetColor();
             }
             catch (Exception e)
             {
-                logger.Error($"Error Displaying Product: {e.Message}");
+                logger.Error($"Error Displaying Product: {e.Message}\n {e.StackTrace}\n{e.InnerException}");
             }
         }
 
